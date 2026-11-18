@@ -300,7 +300,11 @@ p {
 .play svg {
   width: 44px;
   height: 44px;
-  margin-left: 6px;
+}
+
+.play svg,
+.secondary.round svg {
+  translate: 10%;
 }
 
 .feedback {
