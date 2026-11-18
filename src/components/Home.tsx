@@ -1,4 +1,5 @@
 import type { SessionRecord } from '../lib/storage'
+import { currentStreak } from '../lib/streak'
 
 interface Props {
   sessions: SessionRecord[]
@@ -21,6 +22,7 @@ export function Home({ sessions, voiceProblem, onStartTone, onAudioCheck }: Prop
   const today = sessions.filter((s) => isToday(s.finishedAt))
   const best = Math.max(0, ...today.map((s) => s.correct))
   const recent = sessions.slice(-5).reverse()
+  const streak = currentStreak(sessions)
 
   return (
     <main className="screen">
@@ -55,6 +57,14 @@ export function Home({ sessions, voiceProblem, onStartTone, onAudioCheck }: Prop
             ? 'No sessions yet today.'
             : `${today.length} ${today.length === 1 ? 'session' : 'sessions'}, best score ${best}`}
         </p>
+        {streak > 0 && (
+          <p>
+            <strong>{streak}-day streak.</strong>{' '}
+            <span className="muted">
+              {today.length > 0 ? 'Come back tomorrow to keep it going.' : 'Do a session today to keep it going.'}
+            </span>
+          </p>
+        )}
         {recent.length > 0 && (
           <>
             <h2>Recent</h2>
