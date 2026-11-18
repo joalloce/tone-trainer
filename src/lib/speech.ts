@@ -34,7 +34,6 @@ function rank(voice: SpeechSynthesisVoice): number {
   let score = 0
   if (/(cn|hans)/.test(normalizedLang(voice))) score += 10
   if (/natural|xiaoxiao|yunxi/i.test(voice.name)) score += 5
-  if (/google/i.test(voice.name)) score += 3
   if (/enhanced|premium|tingting/i.test(voice.name)) score += 2
   if (voice.localService) score += 1
   return score
@@ -49,7 +48,13 @@ export async function loadMandarinVoices(timeoutMs = 3000): Promise<SpeechSynthe
     await new Promise((resolve) => setTimeout(resolve, 100))
     voices = synth.getVoices()
   }
-  return voices.filter(isMandarin).sort((a, b) => rank(b) - rank(a))
+  return pickMandarinVoices(voices)
+}
+
+export function pickMandarinVoices(voices: readonly SpeechSynthesisVoice[]): SpeechSynthesisVoice[] {
+  const mandarin = voices.filter(isMandarin)
+  const google = mandarin.filter((voice) => /google/i.test(voice.name))
+  return (google.length > 0 ? google : mandarin).sort((a, b) => rank(b) - rank(a))
 }
 
 let current: SpeechSynthesisUtterance | null = null
