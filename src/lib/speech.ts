@@ -29,10 +29,17 @@ function isMandarin(voice: SpeechSynthesisVoice): boolean {
   return (lang.startsWith('zh') || lang.startsWith('cmn')) && !lang.includes('hk') && !lang.includes('yue')
 }
 
-/** Higher is better: mainland voices first, then neural and enhanced ones. */
+/**
+ * Mainland Mandarin (zh-CN, zh-Hans). The answer key follows mainland readings,
+ * and Taiwan voices read some characters with another tone (危 wéi, 息 xí).
+ */
+function isMainland(voice: SpeechSynthesisVoice): boolean {
+  return /(cn|hans)/.test(normalizedLang(voice))
+}
+
+/** Higher is better: neural and enhanced voices first. */
 function rank(voice: SpeechSynthesisVoice): number {
   let score = 0
-  if (/(cn|hans)/.test(normalizedLang(voice))) score += 10
   if (/natural|xiaoxiao|yunxi/i.test(voice.name)) score += 5
   if (/enhanced|premium|tingting/i.test(voice.name)) score += 2
   if (voice.localService) score += 1
@@ -51,10 +58,16 @@ export async function loadMandarinVoices(timeoutMs = 3000): Promise<SpeechSynthe
   return pickMandarinVoices(voices)
 }
 
+/**
+ * Mainland voices when there are any (Taiwan voices are only a fallback),
+ * then only the Google ones among them when the browser has them.
+ */
 export function pickMandarinVoices(voices: readonly SpeechSynthesisVoice[]): SpeechSynthesisVoice[] {
   const mandarin = voices.filter(isMandarin)
-  const google = mandarin.filter((voice) => /google/i.test(voice.name))
-  return (google.length > 0 ? google : mandarin).sort((a, b) => rank(b) - rank(a))
+  const mainland = mandarin.filter(isMainland)
+  const pool = mainland.length > 0 ? mainland : mandarin
+  const google = pool.filter((voice) => /google/i.test(voice.name))
+  return (google.length > 0 ? google : pool).sort((a, b) => rank(b) - rank(a))
 }
 
 let current: SpeechSynthesisUtterance | null = null
